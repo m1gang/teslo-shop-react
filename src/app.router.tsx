@@ -30,7 +30,7 @@ export const appRouter = createBrowserRouter([
                 element: <ProductPage />
             },
             {
-                path: '',
+                path: 'gender/:gender',
                 element: <GenderPage />
             }
         ]
