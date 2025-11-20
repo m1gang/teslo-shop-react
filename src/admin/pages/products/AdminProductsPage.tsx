@@ -14,13 +14,15 @@ export const AdminProductsPage = () => {
                     title="Productos"
                     subtitle="Aqui puedes gestionar tus productos"
                 />
+                <div className='flex justify-end mb-10 gap-4'>
+                    <Link to='/admin/products/new'>
+                        <Button>
+                            <PlusIcon className='mr-2' />
+                            Nuevo Producto
+                        </Button>
+                    </Link>
 
-                <Link to='/admin/products/new'>
-                    <Button>
-                        <PlusIcon className='mr-2' />
-                        Nuevo Producto
-                    </Button>
-                </Link>
+                </div>
             </div>
 
 
