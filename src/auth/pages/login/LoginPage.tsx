@@ -2,19 +2,35 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { CustomLogo } from "@/components/custom/CustomLogo"
-import type { FormEvent } from "react"
+import { useState, type FormEvent } from "react"
+import { loginAction } from "@/auth/actions/login.action"
+import { toast } from "sonner"
 
 export const LoginPage = () => {
 
+    const navigate = useNavigate();
+    const [isPosting, setIsPosting] = useState(false);
+
     const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setIsPosting(true);
 
         const formData = new FormData(event.target as HTMLFormElement);
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
-        console.log({ email, password });
+
+
+        try {
+            const data = await loginAction(email, password);
+            localStorage.setItem('token', data.token);
+            console.log('redireccionando al home');
+            navigate('/');
+        } catch (error) {
+            toast.error('Correo y/o contraseñas no válidos')
+        }
+        setIsPosting(false);
 
     }
 
@@ -42,7 +58,9 @@ export const LoginPage = () => {
                                 </div>
                                 <Input id="password" type="password" placeholder="Contraseña" name="password" required />
                             </div>
-                            <Button type="submit" className="w-full">
+                            <Button type="submit" className="w-full"
+                                disabled={isPosting}
+                            >
                                 Ingresar
                             </Button>
                             <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">

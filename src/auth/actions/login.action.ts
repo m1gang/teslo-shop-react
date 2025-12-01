@@ -10,6 +10,8 @@ export const loginAction = async (email: string, password: string): Promise<Auth
             password,
         })
         console.log(data);
+        // Return the API response data so the caller (LoginPage) can access the token and other metadata
+        return data;
 
 
 
