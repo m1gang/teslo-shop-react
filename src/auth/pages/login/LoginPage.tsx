@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label"
 import { Link, useNavigate } from "react-router"
 import { CustomLogo } from "@/components/custom/CustomLogo"
 import { useState, type FormEvent } from "react"
-import { loginAction } from "@/auth/actions/login.action"
 import { toast } from "sonner"
 import { useAuthStore } from "@/auth/store/auth.store"
 
