@@ -7,10 +7,14 @@ import { CustomLogo } from "@/components/custom/CustomLogo"
 import { useState, type FormEvent } from "react"
 import { loginAction } from "@/auth/actions/login.action"
 import { toast } from "sonner"
+import { useAuthStore } from "@/auth/store/auth.store"
 
 export const LoginPage = () => {
 
     const navigate = useNavigate();
+
+    const { login } = useAuthStore();
+
     const [isPosting, setIsPosting] = useState(false);
 
     const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -21,15 +25,15 @@ export const LoginPage = () => {
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
 
+        const isValid = await login(email, password);
 
-        try {
-            const data = await loginAction(email, password);
-            localStorage.setItem('token', data.token);
-            console.log('redireccionando al home');
+        if (isValid) {
             navigate('/');
-        } catch (error) {
-            toast.error('Correo y/o contraseñas no válidos')
+            return;
         }
+
+
+        toast.error('Correo y/o contraseñas no válidos')
         setIsPosting(false);
 
     }
