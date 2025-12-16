@@ -22,7 +22,6 @@ interface SidebarProps {
 
 export const AdminSidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
   const { user } = useAuthStore();
-  console.log(user);
 
 
   const { pathname } = useLocation();
