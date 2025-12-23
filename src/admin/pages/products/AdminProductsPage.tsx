@@ -1,11 +1,19 @@
 import { AdminTitle } from '@/admin/components/AdminTitle'
+import { CustomFullScreenLoading } from '@/components/custom/CustomFullScreenLoading'
 import { CustomPagination } from '@/components/custom/CustomPagination'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { PlusIcon } from 'lucide-react'
+import { currencyFormater } from '@/lib/currency-formater'
+import { useProducts } from '@/shop/hooks/useProducts'
+import { PencilIcon, PlusIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
 export const AdminProductsPage = () => {
+
+    const { data, isLoading } = useProducts();
+
+    if (isLoading) return <CustomFullScreenLoading />
+
     return (
         <>
 
@@ -29,7 +37,6 @@ export const AdminProductsPage = () => {
             <Table className='bg-white p-10 shadow-xs border-gray-200 mb-10'>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[100px]">ID</TableHead>
                         <TableHead>Imagen</TableHead>
                         <TableHead>Nombre</TableHead>
                         <TableHead>Precio</TableHead>
@@ -40,7 +47,37 @@ export const AdminProductsPage = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow>
+                    {
+                        data?.products.map(product => {
+                            return (
+                                <TableRow key={product.id}>
+
+                                    <TableCell>
+                                        <img src={product.images[0]}
+                                            alt={product.title}
+                                            className='w-20 h-20 object-cover rounded-md'
+                                        />
+                                    </TableCell>
+                                    <Link to={`/admin/products/${product.id}`}
+                                        className='hover:text-blue-900 hover:underline'>
+                                        <TableCell>{product.title}</TableCell>
+                                    </Link>
+                                    <TableCell>{currencyFormater(product.price)}</TableCell>
+                                    <TableCell>{product.gender}</TableCell>
+                                    <TableCell>{product.stock}</TableCell>
+                                    <TableCell>{(product.sizes).join(',').toLocaleLowerCase()}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Link to={`/admin/products/${product.id}`}>
+                                            <PencilIcon
+                                                className='w-5 h-5 text-gray-900'
+                                            />
+                                        </Link>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })
+                    }
+                    {/* <TableRow>
                         <TableCell className="w-[100px]">1</TableCell>
                         <TableCell>
                             <img src="https://placehold.co/250x250"
@@ -58,11 +95,11 @@ export const AdminProductsPage = () => {
                                 Editar
                             </Link>
                         </TableCell>
-                    </TableRow>
+                    </TableRow> */}
                 </TableBody>
             </Table>
 
-            <CustomPagination totalPages={10} />
+            <CustomPagination totalPages={data?.pages || 0} />
         </>
 
     )
