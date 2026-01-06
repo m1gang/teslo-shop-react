@@ -1,6 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { getProductByIdAction } from "../actions/get-product-by-id.action"
 import type { Product } from "@/interfaces/product.interface"
+import { create } from "zustand"
+import { createUpdateProductAction } from "../actions/create-update-product.action"
 
 export const useProduct = (id: string) => {
 
@@ -11,17 +13,24 @@ export const useProduct = (id: string) => {
         staleTime: 1000 * 60 * 5,
     })
 
-    // Todo mutación
-    // const mutation = useMutation();
+    const mutation = useMutation({
+        mutationFn: createUpdateProductAction,
+        onSuccess: (product: Product) => {
+            console.log('todo salió bien', product);
+            //invalidar cache
+            //actualizar querydata
+        }
+    });
 
-    // todo: por eliminar
-    const handleSubmitForm = async (productLike: Partial<Product>) => {
-        console.log({ productLike });
 
-    }
+
+    // const handleSubmitForm = async (productLike: Partial<Product>) => {
+    //     console.log({ productLike });
+
+    // }
 
     return {
         ...query,
-        handleSubmitForm
+        mutation
     }
 }

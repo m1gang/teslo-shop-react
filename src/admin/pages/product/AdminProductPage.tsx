@@ -1,8 +1,9 @@
-import { Navigate, useParams } from 'react-router';
+import { Navigate, useNavigate, useParams } from 'react-router';
 
 import { useProduct } from '@/admin/hooks/useProduct';
 import { CustomFullScreenLoading } from '@/components/custom/CustomFullScreenLoading';
 import { ProductForm } from './ui/ProductForm';
+import { toast } from 'sonner';
 
 interface Product {
     id: string;
@@ -19,8 +20,9 @@ interface Product {
 
 export const AdminProductPage = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
 
-    const { isLoading, data: product, isError, handleSubmitForm } = useProduct(id || '');
+    const { isLoading, data: product, isError, mutation } = useProduct(id || '');
 
     const title = id === 'new' ? 'Nuevo producto' : 'Editar producto';
     const subtitle =
@@ -29,7 +31,21 @@ export const AdminProductPage = () => {
             : 'Aquí puedes editar el producto.';
 
 
-
+    const handleSubmit = async (productLike: Partial<Product>) => {
+        await mutation.mutateAsync(productLike, {
+            onSuccess: (data) => {
+                toast.success('Producto actualizado correctamente', {
+                    position: 'top-right'
+                });
+                navigate(`/admin/products/${data.id}`);
+            },
+            onError: () => {
+                toast.error('Error al actualizar el producto', {
+                    position: 'top-right'
+                });
+            }
+        });
+    }
 
 
     if (isError) {
@@ -46,5 +62,5 @@ export const AdminProductPage = () => {
         product={product}
         title={title}
         subTitle={subtitle}
-        onSubmit={handleSubmitForm} />;
+        onSubmit={handleSubmit} />;
 };
