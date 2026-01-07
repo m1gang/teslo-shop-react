@@ -23,6 +23,7 @@ export const AdminProductPage = () => {
     const navigate = useNavigate();
 
     const { isLoading, data: product, isError, mutation } = useProduct(id || '');
+    console.log({ mutation: mutation.isPending })
 
     const title = id === 'new' ? 'Nuevo producto' : 'Editar producto';
     const subtitle =
@@ -62,5 +63,8 @@ export const AdminProductPage = () => {
         product={product}
         title={title}
         subTitle={subtitle}
-        onSubmit={handleSubmit} />;
+        onSubmit={handleSubmit}
+        isPending={mutation.isPending}
+    />
+
 };
