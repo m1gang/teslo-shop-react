@@ -1,64 +1,68 @@
-import { AdminTitle } from '@/admin/components/AdminTitle';
-import { Button } from '@/components/ui/button';
-import type { Product, Size } from '@/interfaces/product.interface';
-import { X, SaveAll, Tag, Upload, Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { get, useForm } from 'react-hook-form';
+
+import { useForm } from 'react-hook-form';
+
+import { AdminTitle } from '@/admin/components/AdminTitle';
+
+import { Button } from '@/components/ui/button';
+import type { Product, Size } from '@/interfaces/product.interface';
+import { X, SaveAll, Tag, Plus, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
     title: string;
     subTitle: string;
     product: Product;
-
-    //Methods
-    onSubmit: (productLike: Partial<Product>) => Promise<void>;
     isPending: boolean;
+
+    // Methods
+    onSubmit: (productLike: Partial<Product> & { files?: File[] }) => Promise<void>;
 }
-
-
 
 const availableSizes: Size[] = ['XS', 'S', 'M', 'L', 'XL'];
 
-export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: Props) => {
+interface FormInputs extends Product {
+    files?: File[];
+}
 
-    console.log('ProductForm received:', { productImages: product.images, fullProduct: product });
-
-    const { register,
+export const ProductForm = ({
+    title,
+    subTitle,
+    product,
+    onSubmit,
+    isPending,
+}: Props) => {
+    const [dragActive, setDragActive] = useState(false);
+    const {
+        register,
         handleSubmit,
         formState: { errors },
         getValues,
         setValue,
-        watch
-    } = useForm({
+        watch,
+    } = useForm<FormInputs>({
         defaultValues: product,
     });
 
-    const inputRef = useRef<HTMLInputElement>(null);
-    const [files, setFiles] = useState<File[]>([]);
-
-    const [dragActive, setDragActive] = useState(false);
+    const labelInputRef = useRef<HTMLInputElement>(null);
 
     const selectedSizes = watch('sizes');
     const selectedTags = watch('tags');
     const currentStock = watch('stock');
 
     const addTag = () => {
-        const newTag = inputRef.current!.value;
-
+        const newTag = labelInputRef.current!.value;
         if (newTag === '') return;
 
         const newTagSet = new Set(getValues('tags'));
         newTagSet.add(newTag);
-
         setValue('tags', Array.from(newTagSet));
-        inputRef.current!.value = '';
     };
 
-    const removeTag = (tagToRemove: string) => {
+    const removeTag = (tag: string) => {
         const newTagSet = new Set(getValues('tags'));
-        newTagSet.delete(tagToRemove);
+        newTagSet.delete(tag);
         setValue('tags', Array.from(newTagSet));
     };
 
@@ -66,7 +70,6 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
         const sizeSet = new Set(getValues('sizes'));
         sizeSet.add(size);
         setValue('sizes', Array.from(sizeSet));
-
     };
 
     const removeSize = (size: Size) => {
@@ -90,33 +93,32 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
         e.stopPropagation();
         setDragActive(false);
         const files = e.dataTransfer.files;
-
         if (!files) return;
+        const currentFiles = getValues('files') || [];
+        setValue('files', [...currentFiles, ...Array.from(files)]);
 
-        setFiles(prev => [...prev, ...Array.from(files)]);
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files) return;
-
-        setFiles(prev => [...prev, ...Array.from(files)]);
+        const currentFiles = getValues('files') || [];
+        setValue('files', [...currentFiles, ...Array.from(files)]);
     };
-
 
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex justify-between items-center">
                 <AdminTitle title={title} subtitle={subTitle} />
                 <div className="flex justify-end mb-10 gap-4">
-                    <Button variant="outline" type='button'>
+                    <Button variant="outline" type="button">
                         <Link to="/admin/products" className="flex items-center gap-2">
                             <X className="w-4 h-4" />
                             Cancelar
                         </Link>
                     </Button>
 
-                    <Button disabled={isPending} type='submit'>
+                    <Button type="submit" disabled={isPending}>
                         <SaveAll className="w-4 h-4" />
                         Guardar cambios
                     </Button>
@@ -143,16 +145,19 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
                                         {...register('title', {
                                             required: true,
                                         })}
-                                        className={cn("w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200", {
-                                            'border-red-500 focus:ring-red-500': errors.title,
-                                        })}
+                                        className={cn(
+                                            'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200',
+                                            {
+                                                'border-red-500': errors.title,
+                                            }
+                                        )}
                                         placeholder="Título del producto"
                                     />
-                                    {
-                                        errors.title && (
-                                            <p className="text-red-500 text-sm font-medium">El título es requerido</p>
-                                        )
-                                    }
+                                    {errors.title && (
+                                        <p className="text-red-500 text-sm">
+                                            El título es requerido
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -166,16 +171,19 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
                                                 required: true,
                                                 min: 1,
                                             })}
-                                            className={cn("w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200", {
-                                                'border-red-500 focus:ring-red-500': errors.price,
-                                            })}
+                                            className={cn(
+                                                'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200',
+                                                {
+                                                    'border-red-500': errors.price,
+                                                }
+                                            )}
                                             placeholder="Precio del producto"
                                         />
-                                        {
-                                            errors.price && (
-                                                <p className="text-red-500 text-sm font-medium">El precio debe ser mayor a 0</p>
-                                            )
-                                        }
+                                        {errors.price && (
+                                            <p className="text-red-500 text-sm">
+                                                El precio debe de ser mayor a 0
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div>
@@ -188,16 +196,19 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
                                                 required: true,
                                                 min: 1,
                                             })}
-                                            className={cn("w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200", {
-                                                'border-red-500 focus:ring-red-500': errors.stock,
-                                            })}
+                                            className={cn(
+                                                'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200',
+                                                {
+                                                    'border-red-500': errors.stock,
+                                                }
+                                            )}
                                             placeholder="Stock del producto"
                                         />
-                                        {
-                                            errors.stock && (
-                                                <p className="text-red-500 text-sm font-medium">El inventario debe ser mayor a 0</p>
-                                            )
-                                        }
+                                        {errors.stock && (
+                                            <p className="text-red-500 text-sm">
+                                                El inventario debe de ser mayor a 0
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -209,20 +220,23 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
                                         type="text"
                                         {...register('slug', {
                                             required: true,
-                                            validate: (value) => !/\s/.test(value) || 'El slug no puede contener espacios',
+                                            validate: (value) =>
+                                                !/\s/.test(value) ||
+                                                'El slug no puede contener espacios en blanco',
                                         })}
-                                        className={cn("w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200", {
-                                            'border-red-500 focus:ring-red-500': errors.slug,
-                                        })}
+                                        className={cn(
+                                            'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200',
+                                            {
+                                                'border-red-500': errors.slug,
+                                            }
+                                        )}
                                         placeholder="Slug del producto"
                                     />
-                                    {
-                                        errors.slug && (
-                                            <p className="text-red-500 text-sm font-medium">
-                                                {errors.slug.message || 'El slug es requerido'}
-                                            </p>
-                                        )
-                                    }
+                                    {errors.slug && (
+                                        <p className="text-red-500 text-sm">
+                                            {errors.slug.message || 'El slug es requerido.'}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -230,11 +244,11 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
                                         Género del producto
                                     </label>
                                     <select
+                                        {...register('gender')}
                                         // value={product.gender}
                                         // onChange={(e) =>
                                         //   handleInputChange('gender', e.target.value)
                                         // }
-                                        {...register('gender')}
                                         className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                     >
                                         <option value="men">Hombre</option>
@@ -249,23 +263,21 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
                                         Descripción del producto
                                     </label>
                                     <textarea
-
-                                        {...register('description',
-                                            { required: true }
-                                        )}
+                                        {...register('description', { required: true })}
                                         rows={5}
-                                        className={cn("w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200", {
-                                            'border-red-500 focus:ring-red-500': errors.description,
-                                        })}
+                                        className={cn(
+                                            'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200',
+                                            {
+                                                'border-red-500': errors.description,
+                                            }
+                                        )}
                                         placeholder="Descripción del producto"
                                     />
-                                    {
-                                        errors.description && (
-                                            <p className="text-red-500 text-sm font-medium">
-                                                La descripción es requerida
-                                            </p>
-                                        )
-                                    }
+                                    {errors.description && (
+                                        <p className="text-red-500 text-sm">
+                                            {'La descripción es requerida.'}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -278,18 +290,20 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
 
                             <div className="space-y-4">
                                 <div className="flex flex-wrap gap-2">
-
                                     {availableSizes.map((size) => (
                                         <span
                                             key={size}
-                                            className={cn("inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200", {
-                                                'hidden': !selectedSizes.includes(size)
-                                            })}
+                                            className={cn(
+                                                'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200',
+                                                {
+                                                    hidden: !selectedSizes.includes(size),
+                                                }
+                                            )}
                                         >
                                             {size}
                                             <button
                                                 onClick={() => removeSize(size)}
-                                                className="ml-2 text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer"
+                                                className="cursor-pointer ml-2 text-blue-600 hover:text-blue-800 transition-colors duration-200"
                                             >
                                                 <X className="h-3 w-3" />
                                             </button>
@@ -303,10 +317,10 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
                                     </span>
                                     {availableSizes.map((size) => (
                                         <button
+                                            type="button"
                                             key={size}
                                             onClick={() => addSize(size)}
                                             disabled={getValues('sizes').includes(size)}
-                                            type='button'
                                             className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${selectedSizes.includes(size)
                                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                                 : 'bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer'
@@ -336,7 +350,7 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
                                             {tag}
                                             <button
                                                 onClick={() => removeTag(tag)}
-                                                className="ml-2 text-green-600 hover:text-green-800 transition-colors duration-200 cursor-pointer"
+                                                className="ml-2 text-green-600 hover:text-green-800 transition-colors duration-200"
                                             >
                                                 <X className="h-3 w-3" />
                                             </button>
@@ -346,22 +360,18 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
 
                                 <div className="flex gap-2">
                                     <input
+                                        ref={labelInputRef}
                                         type="text"
-                                        ref={inputRef}
-                                        // value={newTag}
-                                        // onChange={(e) => setNewTag(e.target.value)}
-                                        // onKeyDown={(e) => e.key === 'Enter' && addTag()}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' || e.key === ' ' || e.key === ',') {
                                                 e.preventDefault();
                                                 addTag();
-                                                inputRef.current!.value = '';
+                                                labelInputRef.current!.value = '';
                                             }
                                         }}
                                         placeholder="Añadir nueva etiqueta..."
                                         className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                     />
-                                    {/* TODO: */}
                                     <Button onClick={addTag} className="px-4 py-2rounded-lg ">
                                         <Plus className="h-4 w-4" />
                                     </Button>
@@ -437,31 +447,6 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
                                     ))}
                                 </div>
                             </div>
-
-                            {/* Imágenes por cargar */}
-                            <div className={
-                                cn("mt-6 space-y-3", {
-                                    'hidden': files.length === 0
-                                })
-                            }>
-                                <h3 className="text-sm font-medium text-slate-700">
-                                    Imágenes por cargar
-                                </h3>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {
-                                        files.map((file, index) => (
-                                            <img
-                                                src={URL.createObjectURL(file)}
-                                                alt="Product"
-                                                key={index}
-                                                className="w-full h-full object-cover rounded-lg"
-                                            />
-                                        ))
-                                    }
-
-                                </div>
-
-                            </div>
                         </div>
 
                         {/* Product Status */}
@@ -525,4 +510,3 @@ export const ProductForm = ({ title, subTitle, product, onSubmit, isPending }: P
         </form>
     );
 };
-
